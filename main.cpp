@@ -35,6 +35,7 @@ int main(int argc, char* argv[]) {
 
   // ADJUST BELOW, BUT keep writing to the dummy variable
   float* res = new float[SIZE * SIZE];  // result of mean filter
+  float cache;
 
   // Apply an averaging imaging filter to some input image, and write in to an output image.
   // A pixel in the output image is calculated by averaging 9 pixels: the pixel at the same
@@ -42,13 +43,24 @@ int main(int argc, char* argv[]) {
   for (int64_t r = 0; r < REPEAT; ++r) {
     for (int64_t i = 1; i < SIZE - 1; i++) {
       for (int64_t j = 1; j < SIZE - 1; j++) {
+        // Set all values of the res array to 0 initialized
         res[j * SIZE + i] = 0;
-        for (long k = -1; k < 2; k++) {
-          for (long l = -1; l < 2; l++) {
-            res[j * SIZE + i] += img[(j + l) * SIZE + i + k];
+        if (j==1) {
+          for (long k = -1; k < 2; k++) {
+            for (long l = -1; l < 2; l++) {
+              res[j * SIZE + i] += img[(j + l) * SIZE + i + k];
+            }
           }
+          res[j * SIZE + i] /= 9;
+        } else {
+          cache = res[j-1 * SIZE + i] * 9;
+          for (long k = -1; k < 2; k++) {
+            cache -= img[(j-2 ) * SIZE + i + k];
+            cache += img[(j+1) * SIZE + i + k];
+          }
+          res[j * SIZE + i] = cache/9;
         }
-        res[j * SIZE + i] /= 9;
+        cache = res[j * SIZE + i];
       }
     }
 

@@ -41,16 +41,19 @@ int main(int argc, char* argv[]) {
   for (int64_t r = 0; r < REPEAT; ++r) {
     for (int64_t i = 1; i < SIZE - 1; i++) {
       for (int64_t j = 1; j < SIZE - 1; j++) {
+        // Reset the heap
         while (!minHeap.empty()){
           minHeap.pop();
         }
 
+        // Push the elements into a heap
         for (long k = -1; k < 2; k++) {
           for (long l = -1; l < 2; l++) {
-            minHeap.push(img[(j + l) * SIZE + (i + k)]);
+            minHeap.push(img[(j + l) * SIZE + i + k]);
           }
         }
 
+        // Calculate the sum of the elements in the heap
         float sum = 0;
         priority_queue<float, vector<float>, greater<float>> tempHeap = minHeap;
         while (!tempHeap.empty()) {
@@ -71,25 +74,6 @@ int main(int argc, char* argv[]) {
   // Apply an averaging imaging filter to some input image, and write in to an output image.
   // A pixel in the output image is calculated by averaging 9 pixels: the pixel at the same
   // coordinates in the input image, and the adjecent pixels.
-  // for (int64_t r = 0; r < REPEAT; ++r) {
-  //   for (int64_t i = 1; i < SIZE - 1; i++) {
-  //     for (int64_t j = 1; j < SIZE - 1; j++) {
-  //       res[j * SIZE + i] = 0;
-  //       for (long k = -1; k < 2; k++) {
-  //         for (long l = -1; l < 2; l++) {
-  //           res[j * SIZE + i] += img[(j + l) * SIZE + i + k];
-  //         }
-  //       }
-  //       res[j * SIZE + i] /= 9;
-  //     }
-  //   }
-
-  //   for (int64_t i = 1; i < SIZE - 1; i++) {
-  //     for (int64_t j = 1; j < SIZE - 1; j++) {
-  //       dummy += res[j * SIZE + i];
-  //     }
-  //   }
-  // }
 
   delete[] res;
 

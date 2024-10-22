@@ -1,4 +1,4 @@
-/**
+//**
   * Assignment: memory
   * Operating Systems
   */
@@ -17,18 +17,86 @@
 using namespace std;
 
 // size of the image
-const int64_t SIZE = 16384ULL;
-const int64_t REPEAT = 1ULL;
+const int64_t SIZE = 4096ULL;
+const int64_t REPEAT = 20ULL;
+const int RUN_ATTEMPT = 20;
+const int PAGE_SIZE = 1024;
+const int SQR_PAGE_SIZE = 32;
+
+void fillSubMatrix(float array[SIZE * SIZE], int row_offset, int col_offset){
+  for(int i = 0; i < SQR_PAGE_SIZE; i++){
+    int cur_row = i * SIZE;
+    for(int j = 0; j < SQR_PAGE_SIZE; j++){
+      array[row_offset + cur_row + col_offset + j] = (2 * (col_offset + j) + row_offset + i) % 32768;
+    }
+  }
+}
+
+void SecuredFillSubMatrix(float new_array[SIZE * SIZE], float old_array[SIZE * SIZE], int row_offset, int col_offset, int sum){
+  int start_row = 0;
+  int end_row = SQR_PAGE_SIZE;
+  int start_col = 0;
+  int end_col = SQR_PAGE_SIZE;
+  int max_row = SQR_PAGE_SIZE + row_offset;
+  int max_col = SQR_PAGE_SIZE + col_offset;
+  if(row_offset == 0){
+    start_row = 1;
+  }
+  if(max_row == (SIZE - 1)){
+    end_row--;
+  }
+  if(col_offset == 0){
+    start_col = 1;
+  }
+  if(max_col == (SIZE - 1)){
+    end_col--;
+  }
+
+
+  //First phase of computation
+  for(int i = start_row; i < end_row; i++){
+    int cur_row = i * SIZE;
+    for(int j = start_col; j < end_col; j++){
+      new_array[row_offset + cur_row + col_offset + j] = 0;
+      for (long l = -1; l < 2; l++) {
+          for (long k = -1; k < 2; k++) {
+            new_array[row_offset + cur_row + col_offset + j] += old_array[(col_offset + j + l) * SIZE + row_offset + i + k];
+          }
+        }
+        new_array[row_offset + cur_row + col_offset + j] /= 9;
+        sum += new_array[row_offset + cur_row + col_offset + j];
+    }
+  }
+
+  //Second phase of computation
+  /*for(int i = start_row; i < end_row; i++){
+    int cur_row = i * SIZE;
+    for(int j = start_col; j < end_col; j++){
+      sum += new_array[row_offset + cur_row + col_offset + j];
+    }
+  }*/
+}
+
+
 
 int main(int argc, char* argv[]) {
   float* img = new float[SIZE * SIZE];
 
-  // fill with dummy data
-  for (int64_t i = 0; i < SIZE; i++) {
-    for (int64_t j = 0; j < SIZE; j++) {
-      img[j * SIZE + i] = (2 * j + i) % 32768;
-    }
+
+  for(int m = 0; m < 16384; m++){
+    int PAGE_ROW_OFFSET = 32 * (m / 1024);
+    int PAGE_COL_OFFSET = 32 * (m % 1024);
+    fillSubMatrix(img, PAGE_ROW_OFFSET, PAGE_COL_OFFSET);
+    
   }
+
+  /* fill with dummy data
+  for (int64_t i = 0; i < SIZE; i++) {
+    int cur_row = i * SIZE;
+    for (int64_t j = 0; j < SIZE; j++) {
+      img[cur_row + j] = (2 * j + i) % 32768;
+    }
+  }*/
 
   // this dummy value is needed to avoid compilers eliminating the loop as part of a optimisation
   uint64_t dummy = 0;
@@ -36,28 +104,38 @@ int main(int argc, char* argv[]) {
   // ADJUST BELOW, BUT keep writing to the dummy variable
   float* res = new float[SIZE * SIZE];  // result of mean filter
 
+  for(int64_t r = 0; r < REPEAT; ++r) {
+    for(int m = 0; m < 16384; m++){
+      int PAGE_ROW_OFFSET = 32 * (m / 1024);
+      int PAGE_COL_OFFSET = 32 * (m % 1024);
+      SecuredFillSubMatrix(res, img, PAGE_ROW_OFFSET, PAGE_COL_OFFSET, dummy);
+    }
+  }
+
   // Apply an averaging imaging filter to some input image, and write in to an output image.
   // A pixel in the output image is calculated by averaging 9 pixels: the pixel at the same
   // coordinates in the input image, and the adjecent pixels.
-  for (int64_t r = 0; r < REPEAT; ++r) {
+  /*for (int64_t r = 0; r < REPEAT; ++r) {
     for (int64_t i = 1; i < SIZE - 1; i++) {
+      int cur_row = i * SIZE;
       for (int64_t j = 1; j < SIZE - 1; j++) {
-        res[j * SIZE + i] = 0;
-        for (long k = -1; k < 2; k++) {
-          for (long l = -1; l < 2; l++) {
-            res[j * SIZE + i] += img[(j + l) * SIZE + i + k];
+        res[cur_row + j] = 0;
+        for (long l = -1; l < 2; l++) {
+          for (long k = -1; k < 2; k++) {
+            res[cur_row + j] += img[(j + l) * SIZE + i + k];
           }
         }
-        res[j * SIZE + i] /= 9;
+        res[cur_row + j] /= 9;
       }
     }
 
     for (int64_t i = 1; i < SIZE - 1; i++) {
+      int cur_row = i * SIZE;
       for (int64_t j = 1; j < SIZE - 1; j++) {
-        dummy += res[j * SIZE + i];
+        dummy += res[cur_row + j];
       }
     }
-  }
+  }*/
 
   delete[] res;
 
@@ -65,6 +143,9 @@ int main(int argc, char* argv[]) {
   delete[] img;
 
   struct rusage usage;
+  std::cout << "run:                          " << RUN_ATTEMPT << endl;
+  std::cout << "SIZE:                         " << SIZE << endl;
+  std::cout << "REPEAT:                       " << REPEAT << endl;
   getrusage(RUSAGE_SELF, &usage);
 
   std::cout << "user time:                    " << usage.ru_utime.tv_sec << "." << std::fixed << std::setw(6) << std::setprecision(6) << std::setfill('0') << usage.ru_utime.tv_usec << " s" << std::endl;

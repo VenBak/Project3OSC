@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <iostream>
 #include <vector>
+#include <queue>
 
 // although it is good habit, you don't have to type 'std::' before many objects by including this line
 using namespace std;
@@ -22,6 +23,7 @@ const int64_t REPEAT = 1ULL;
 
 int main(int argc, char* argv[]) {
   float* img = new float[SIZE * SIZE];
+  priority_queue<float, vector<float>, greater<float>> minHeap;
 
   // fill with dummy data
   for (int64_t i = 0; i < SIZE; i++) {
@@ -36,19 +38,26 @@ int main(int argc, char* argv[]) {
   // ADJUST BELOW, BUT keep writing to the dummy variable
   float* res = new float[SIZE * SIZE];  // result of mean filter
 
-  // Apply an averaging imaging filter to some input image, and write in to an output image.
-  // A pixel in the output image is calculated by averaging 9 pixels: the pixel at the same
-  // coordinates in the input image, and the adjecent pixels.
   for (int64_t r = 0; r < REPEAT; ++r) {
     for (int64_t i = 1; i < SIZE - 1; i++) {
       for (int64_t j = 1; j < SIZE - 1; j++) {
-        res[j * SIZE + i] = 0;
+        while (!minHeap.empty()){
+          minHeap.pop();
+        }
+
         for (long k = -1; k < 2; k++) {
           for (long l = -1; l < 2; l++) {
-            res[j * SIZE + i] += img[(j + l) * SIZE + i + k];
+            minHeap.push(img[(j + l) * SIZE + (i + k)]);
           }
         }
-        res[j * SIZE + i] /= 9;
+
+        float sum = 0;
+        priority_queue<float, vector<float>, greater<float>> tempHeap = minHeap;
+        while (!tempHeap.empty()) {
+          sum += tempHeap.top();
+          tempHeap.pop();
+        }
+        res[j * SIZE + i] = sum / 9;
       }
     }
 
@@ -58,6 +67,29 @@ int main(int argc, char* argv[]) {
       }
     }
   }
+
+  // Apply an averaging imaging filter to some input image, and write in to an output image.
+  // A pixel in the output image is calculated by averaging 9 pixels: the pixel at the same
+  // coordinates in the input image, and the adjecent pixels.
+  // for (int64_t r = 0; r < REPEAT; ++r) {
+  //   for (int64_t i = 1; i < SIZE - 1; i++) {
+  //     for (int64_t j = 1; j < SIZE - 1; j++) {
+  //       res[j * SIZE + i] = 0;
+  //       for (long k = -1; k < 2; k++) {
+  //         for (long l = -1; l < 2; l++) {
+  //           res[j * SIZE + i] += img[(j + l) * SIZE + i + k];
+  //         }
+  //       }
+  //       res[j * SIZE + i] /= 9;
+  //     }
+  //   }
+
+  //   for (int64_t i = 1; i < SIZE - 1; i++) {
+  //     for (int64_t j = 1; j < SIZE - 1; j++) {
+  //       dummy += res[j * SIZE + i];
+  //     }
+  //   }
+  // }
 
   delete[] res;
 

@@ -1,0 +1,3 @@
+/Users/andrebrahin/Computing_Science/Project3OSC/build/CMakeFiles/memory.dir
+/Users/andrebrahin/Computing_Science/Project3OSC/build/CMakeFiles/edit_cache.dir
+/Users/andrebrahin/Computing_Science/Project3OSC/build/CMakeFiles/rebuild_cache.dir

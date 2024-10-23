@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/Users/andrebrahin/Computing_Science/Project3OSC/build",
+  "command": "/usr/bin/clang++    -Wall -O2 -g -g -std=gnu++14 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk -mmacosx-version-min=14.6 -o CMakeFiles/memory.dir/main.cpp.o -c /Users/andrebrahin/Computing_Science/Project3OSC/main.cpp",
+  "file": "/Users/andrebrahin/Computing_Science/Project3OSC/main.cpp",
+  "output": "CMakeFiles/memory.dir/main.cpp.o"
+}
+]

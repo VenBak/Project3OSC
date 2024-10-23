@@ -1,7 +1,5 @@
-//**
-  * Assignment: memory
-  * Operating Systems
-  */
+//Assignment: memory
+//Operating Systems
 
 // function/class definitions you are going to use
 #include <sys/resource.h>
@@ -19,7 +17,7 @@ using namespace std;
 // size of the image
 const int64_t SIZE = 4096ULL;
 const int64_t REPEAT = 20ULL;
-const int RUN_ATTEMPT = 20;
+const int RUN_ATTEMPT = 21;
 const int PAGE_SIZE = 1024;
 const int SQR_PAGE_SIZE = 32;
 
@@ -27,12 +25,13 @@ void fillSubMatrix(float array[SIZE * SIZE], int row_offset, int col_offset){
   for(int i = 0; i < SQR_PAGE_SIZE; i++){
     int cur_row = i * SIZE;
     for(int j = 0; j < SQR_PAGE_SIZE; j++){
-      array[row_offset + cur_row + col_offset + j] = (2 * (col_offset + j) + row_offset + i) % 32768;
+      int new_index = row_offset + cur_row + col_offset + j;
+      array[new_index] = (2 * (col_offset + j) + row_offset + i) % 32768;
     }
   }
 }
 
-void SecuredFillSubMatrix(float new_array[SIZE * SIZE], float old_array[SIZE * SIZE], int row_offset, int col_offset, int sum){
+int64_t SecuredFillSubMatrix(float new_array[SIZE * SIZE], float old_array[SIZE * SIZE], int row_offset, int col_offset, int64_t sum){
   int start_row = 0;
   int end_row = SQR_PAGE_SIZE;
   int start_col = 0;
@@ -57,14 +56,17 @@ void SecuredFillSubMatrix(float new_array[SIZE * SIZE], float old_array[SIZE * S
   for(int i = start_row; i < end_row; i++){
     int cur_row = i * SIZE;
     for(int j = start_col; j < end_col; j++){
-      new_array[row_offset + cur_row + col_offset + j] = 0;
+      int new_index = row_offset + cur_row + col_offset + j;
+      new_array[new_index] = 0;
       for (long l = -1; l < 2; l++) {
           for (long k = -1; k < 2; k++) {
-            new_array[row_offset + cur_row + col_offset + j] += old_array[(col_offset + j + l) * SIZE + row_offset + i + k];
+            int old_index = (col_offset + j + l) * SIZE + row_offset + i + k;
+            if(old_index >= 0 && old_index < (SIZE * SIZE))
+            new_array[new_index] += old_array[old_index];
           }
         }
-        new_array[row_offset + cur_row + col_offset + j] /= 9;
-        sum += new_array[row_offset + cur_row + col_offset + j];
+        new_array[new_index] /= 9;
+        sum += new_array[new_index];
     }
   }
 
@@ -75,6 +77,9 @@ void SecuredFillSubMatrix(float new_array[SIZE * SIZE], float old_array[SIZE * S
       sum += new_array[row_offset + cur_row + col_offset + j];
     }
   }*/
+
+  return sum;
+  
 }
 
 
@@ -103,13 +108,21 @@ int main(int argc, char* argv[]) {
 
   // ADJUST BELOW, BUT keep writing to the dummy variable
   float* res = new float[SIZE * SIZE];  // result of mean filter
+  uint64_t values[REPEAT*16384];
 
   for(int64_t r = 0; r < REPEAT; ++r) {
     for(int m = 0; m < 16384; m++){
       int PAGE_ROW_OFFSET = 32 * (m / 1024);
       int PAGE_COL_OFFSET = 32 * (m % 1024);
-      SecuredFillSubMatrix(res, img, PAGE_ROW_OFFSET, PAGE_COL_OFFSET, dummy);
+      values[(r*16384)+m] = SecuredFillSubMatrix(res, img, PAGE_ROW_OFFSET, PAGE_COL_OFFSET, dummy);
+      if(values[(r*16384)+m] > 0){
+        cout << "value now is: " << values[(r*16384)+m] << endl;
+      }
     }
+  }
+
+  for(int i = 0; i < (REPEAT*16384); i++){
+    dummy += values[i];
   }
 
   // Apply an averaging imaging filter to some input image, and write in to an output image.
